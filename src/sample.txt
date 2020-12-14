@@ -1,0 +1,6 @@
+5
+Delmonico's 40.708881 -74.009943 4
+RussianTeaRoom 40.768712 -73.980074 3
+GreenwichVillageBistro 40.730348 -74.00239 5
+PerSeRestaurant 40.731259 -74.00239 2
+CorneliaStreetCafe 40.730478 -74.00239 5
