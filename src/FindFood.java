@@ -9,23 +9,18 @@ public class FindFood {
     private static int rating;
     static ArrayList<Restaurant> restaurantsList;
 
-    private static double dist(double x1,double y1, double x2, double y2){
+    private static double dist(double x1, double y1, double x2, double y2) {
+        // convert to radians
+        double xr1 = Math.toRadians(x1);
+        double xr2 = Math.toRadians(x2);
+        double yr1 = Math.toRadians(y1);
+        double yr2 = Math.toRadians(y2);
 
-        double d = 0;
-        double nx1=Math.toRadians(x1);
-        double nx2=Math.toRadians(x2);
-        double ny1=Math.toRadians(y1);
-        double ny2=Math.toRadians(y2);
-
-        double sx1=Math.cos(x1);
-        double sx2=Math.sin(x2);
-        double cx1=Math.cos(x1);
-        double cx2=Math.cos(x2);
-        double yd=ny1-ny2;
-        double cyd=Math.cos(yd);
-
-        d = 1.1516 * 60 * Math.acos( (sx1*sx2) + (cx1 * cx2 *cyd));
-        return d;
+        // use formula given
+        double arc = Math.acos(Math.sin(xr1) * Math.sin(xr2)
+                + Math.cos(xr1) * Math.cos(xr2) * Math.cos(yr1 - yr2));
+        double dist = 1.1516 * 60 * Math.toDegrees(arc);
+        return dist;
     }
 
     private static double findNext(double x, double y, double lat, double lon){
@@ -33,27 +28,31 @@ public class FindFood {
 
         return distance;
     }
-
-    void markFound(int f, double[] lat, double[] lon){
-
+    private static void markFound(int f, double[] lat, double[] lon) {
+        lat[f] = Double.POSITIVE_INFINITY;
+        lon[f] = Double.POSITIVE_INFINITY;
+    }
+    private static int findNext(double x, double y, double[] lat, double[] lon) {
+        int N = lat.length;
+        double minDist = Double.POSITIVE_INFINITY;
+        int closest = 0;
+        for (int i = 0; i < N; i++) {
+            double d = dist(x, y, lat[i], lon[i]);
+            if (minDist > d) {
+                minDist = d;
+                closest = i;
+            }
+        }
+        return closest;
     }
 
-    public static void main(String[] args) {
-        restaurantsList = readRestaurantData();
-        ArrayList<Restaurant> outputList = new ArrayList<>();
-        getInput();
-        restaurantsList.forEach((restaurant -> {
-            if(restaurant.getRating() > rating) {
-                double distance = findNext(latitude, longitude, restaurant.getLatitude(), restaurant.getLongitude());
-                restaurant.setDistance(distance);
-                outputList.add(restaurant);
-            }
-        }));
 
-        for (Restaurant re:outputList){
-            System.out.println(re.getName()+"has a rating of  "+re.getRating() );
-            System.out.println("Distance "+ re.getDistance()+" miles");
-        }
+
+    public static void main(String[] args) {
+        getInput();
+
+        restaurantsList = readRestaurantData();
+
 
 
     }
@@ -63,15 +62,46 @@ public class FindFood {
         try {
             File myObj = new File(RESTAURANT_FILE_PATH);
             Scanner myReader = new Scanner(myObj);
+
+
+
+
+            int N = Integer.parseInt(myReader.nextLine());
+            String[] names = new String[N];
+            double[] lat   = new double[N];
+            double[] lon   = new double[N];
+            int[] ratings  = new int[N];
+            int ii = 0;
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
-                String arr[] = data.split(" ");
+                String [] arr = data.split(" ");
                 if(arr.length>1) {
                     Restaurant restaurant = new Restaurant(arr[0], Double.parseDouble(arr[1]), Double.parseDouble(arr[2]), Integer.parseInt(arr[3]),0);
                     restaurantsList.add(restaurant);
+
+                    names[ii] = arr[0];
+                    lat[ii]   = Double.parseDouble(arr[1]);
+                    lon[ii]   =Double.parseDouble(arr[2]);
+                    ratings[ii] = Integer.parseInt(arr[3]);
+                }else{
+                    N = Integer.parseInt(arr[0]);
                 }
+
             }
-            myReader.close();
+
+            for (int i = 0; i < N; i++) {
+                int next = findNext(latitude, longitude, lat, lon);
+                if (ratings[next] >= rating) {
+                    System.out.println(names[next] + " has a rating of "
+                            + ratings[next]);
+                    double dist = dist(latitude, longitude, lat[next], lon[next]);
+                    System.out.println("Distance:  miles "+dist);
+                }
+                // remove from consideration
+                markFound(next, lat, lon);
+            }
+
+
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
